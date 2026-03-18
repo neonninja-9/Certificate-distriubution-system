@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agentic AI Workshop - Certificate Portal</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -17,7 +17,7 @@
     <main class="container">
         <div class="glass-card">
             <div class="card-header">
-                <h1>Certificate Portal</h1>
+                <h1>Amity University Madhya Pradesh</h1>
                 <p>Agentic AI Workshop</p>
             </div>
             
@@ -47,6 +47,6 @@
         </div>
     </main>
 
-    <script src="/js/script.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

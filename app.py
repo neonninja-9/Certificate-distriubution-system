@@ -12,13 +12,21 @@ app = Flask(__name__)
 DATA_FILE = os.path.join('data', 'SALE_Sorted_Final.csv')
 BASE_CERT_FILE = os.path.join('assets', 'base_certificate.pdf')
 
+
+def normalize_enrollment(value):
+    return "".join(ch for ch in str(value).upper() if ch.isalnum())
+
+
+def normalize_name(value):
+    return " ".join(str(value).split()).casefold()
+
 def load_students():
     students = {}
     try:
         with open(DATA_FILE, mode='r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             for row in reader:
-                enrollment = row.get('ENROLLMENT', '').strip().upper()
+                enrollment = normalize_enrollment(row.get('ENROLLMENT', ''))
                 name = row.get('NAME', '').strip()
                 if enrollment:
                     students[enrollment] = name
@@ -87,8 +95,8 @@ def generate():
     data = request.get_json()
     if not data:
         return jsonify({"success": False, "message": "Invalid data format."}), 400
-        
-    enrollment_input = data.get('enrollment', '').strip().upper()
+
+    enrollment_input = normalize_enrollment(data.get('enrollment', ''))
     name_input = data.get('name', '').strip()
     
     if not enrollment_input or not name_input:
@@ -99,9 +107,9 @@ def generate():
         return jsonify({"success": False, "message": "Enrollment Number not found in our records."}), 404
         
     registered_name = STUDENTS_DB[enrollment_input]
-    
-    # Case-insensitive name match
-    if name_input.lower() != registered_name.lower():
+
+    # Case-insensitive name match with whitespace normalization.
+    if normalize_name(name_input) != normalize_name(registered_name):
         return jsonify({"success": False, "message": f"Name does not match the records for enrollment {enrollment_input}."}), 400
         
     try:
