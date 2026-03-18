@@ -3,7 +3,6 @@ import csv
 import io
 from flask import Flask, render_template, request, jsonify, send_file
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import landscape, A4
 from pypdf import PdfReader, PdfWriter
 
 app = Flask(__name__)
@@ -16,10 +15,6 @@ BASE_CERT_FILE = os.path.join('assets', 'base_certificate.pdf')
 def normalize_enrollment(value):
     return "".join(ch for ch in str(value).upper() if ch.isalnum())
 
-
-def normalize_name(value):
-    return " ".join(str(value).split()).casefold()
-
 def load_students():
     students = {}
     try:
@@ -27,9 +22,8 @@ def load_students():
             reader = csv.DictReader(file)
             for row in reader:
                 enrollment = normalize_enrollment(row.get('ENROLLMENT', ''))
-                name = row.get('NAME', '').strip()
                 if enrollment:
-                    students[enrollment] = name
+                    students[enrollment] = row.get('NAME', '').strip()
     except Exception as e:
         print(f"Error loading CSV: {e}")
     return students
@@ -37,7 +31,7 @@ def load_students():
 # Load students into memory at startup
 STUDENTS_DB = load_students()
 
-def generate_certificate_pdf(name, enrollment):
+def generate_certificate_pdf(name):
     # Create the overlay with the student's name
     packet = io.BytesIO()
     
@@ -106,17 +100,11 @@ def generate():
     if enrollment_input not in STUDENTS_DB:
         return jsonify({"success": False, "message": "Enrollment Number not found in our records."}), 404
         
-    registered_name = STUDENTS_DB[enrollment_input]
-
-    # Case-insensitive name match with whitespace normalization.
-    if normalize_name(name_input) != normalize_name(registered_name):
-        return jsonify({"success": False, "message": f"Name does not match the records for enrollment {enrollment_input}."}), 400
-        
     try:
-        pdf_stream = generate_certificate_pdf(registered_name, enrollment_input)
+        pdf_stream = generate_certificate_pdf(name_input)
         
         # Safe filename
-        safe_name = "".join([c for c in registered_name if c.isalpha() or c.isdigit() or c==' ']).rstrip()
+        safe_name = "".join([c for c in name_input if c.isalpha() or c.isdigit() or c == ' ']).rstrip()
         filename = f"Certificate_{safe_name.replace(' ', '_')}.pdf"
         
         return send_file(
